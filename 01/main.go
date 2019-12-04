@@ -1,3 +1,5 @@
+//Problem description: https://adventofcode.com/2019/day/1
+
 package main
 
 import (

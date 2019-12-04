@@ -11,23 +11,48 @@ import (
 
 func main() {
 	partOne()
+	partTwo()
 }
 
 func partOne() {
-	fmt.Println("Calculating fuel requirement...")
+	fmt.Println("Part 1 start")
+
 	masses := getMassesFromFile()
 	fuelRequired := int64(0)
 	for _, mass := range masses {
-		fuelRequired += calculateFuel(mass)
+		fuelRequired += calculateFuelPart1(mass)
 	}
 
-	fmt.Println("Done!")
-	fmt.Println("The fuel requirement is", fuelRequired)
+	fmt.Println("Fuel requirement:", fuelRequired)
 }
 
-func calculateFuel(mass int64) int64 {
+func calculateFuelPart1(mass int64) int64 {
 	x := float64(mass / 3)
 	return int64(math.Floor(x) - 2)
+}
+
+func partTwo() {
+	fmt.Println("Part 2 start")
+
+	masses := getMassesFromFile()
+	fuelRequired := int64(0)
+	for _, mass := range masses {
+		fuelRequired += calculateFuelPart2(mass, 0)
+	}
+
+	fmt.Println("Fuel requirement:", fuelRequired)
+}
+
+func calculateFuelPart2(mass int64, fuelRequirement int64) int64 {
+	x := float64(mass / 3)
+	mass = int64(math.Floor(x) - 2)
+
+	if mass < 1 {
+		return fuelRequirement
+	}
+	fuelRequirement += mass
+
+	return calculateFuelPart2(mass, fuelRequirement)
 }
 
 func getMassesFromFile() []int64 {

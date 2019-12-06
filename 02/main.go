@@ -12,20 +12,23 @@ import (
 
 func main() {
 	partOne()
+	partTwo()
 }
 
-func add(a int64, b int64) int64 {
+func add(a int, b int) int {
 	return a + b
 }
 
-func multiply(a int64, b int64) int64 {
+func multiply(a int, b int) int {
 	return a * b
 }
 
-var operations = map[int64](func(int64, int64) int64){
+var operations = map[int](func(int, int) int){
 	1: add,
 	2: multiply,
 }
+
+var originalInput []int
 
 func partOne() {
 	fmt.Println("Part 1 start")
@@ -38,7 +41,7 @@ func partOne() {
 	fmt.Println("Value in position 0 after program halts:", inputs[0])
 }
 
-func runGravityAssistProgram(inputs []int64) {
+func runGravityAssistProgram(inputs []int) {
 	i := 0
 	roof := len(inputs) - 4
 	for i < roof {
@@ -59,7 +62,56 @@ func runGravityAssistProgram(inputs []int64) {
 	}
 }
 
-func getInputFromFile() []int64 {
+func partTwo() {
+	fmt.Println("Part 2 start")
+
+	inputs := setupInputs()
+	expectedOutput := 19690720
+	found, noun, verb := findNounAndVerb(inputs, expectedOutput)
+
+	if !found {
+		log.Fatal("No noun and verb found for the expected output")
+	}
+
+	fmt.Println("Noun", noun, "and verb", verb, "produce output", expectedOutput)
+	result := 100*noun + verb
+	fmt.Println("100 *", noun, "+", verb, "=", result)
+}
+
+func findNounAndVerb(inputs []int, output int) (bool, int, int) {
+	for noun := 0; noun < 100; noun++ {
+		for verb := 0; verb < 100; verb++ {
+			resetInputs(inputs)
+			inputs[1] = noun
+			inputs[2] = verb
+			runGravityAssistProgram(inputs)
+			if inputs[0] == output {
+				return true, noun, verb
+			}
+		}
+	}
+	return false, 0, 0
+}
+
+func setupInputs() []int {
+	originalInput = getInputFromFile()
+	var inputs []int
+	for i := range originalInput {
+		inputs = append(inputs, originalInput[i])
+	}
+	return inputs
+}
+
+func resetInputs(inputs []int) {
+	if len(originalInput) != len(inputs) {
+		log.Fatal("length of inputs not matching")
+	}
+	for i := range originalInput {
+		inputs[i] = originalInput[i]
+	}
+}
+
+func getInputFromFile() []int {
 	content, err := ioutil.ReadFile("./input")
 	if err != nil {
 		log.Fatal(err)
@@ -67,14 +119,14 @@ func getInputFromFile() []int64 {
 
 	text := string(content)
 	inputAsStrings := strings.Split(text, ",")
-	var inputAsInts []int64
+	var inputAsInts []int
 
 	for _, str := range inputAsStrings {
 		input, e := strconv.ParseInt(str, 0, 0)
 		if e != nil {
 			log.Fatal(err)
 		}
-		inputAsInts = append(inputAsInts, input)
+		inputAsInts = append(inputAsInts, int(input))
 	}
 
 	return inputAsInts

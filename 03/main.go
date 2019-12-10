@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	//partOne()
+	partOne()
 	partTwo()
 }
 
@@ -86,10 +86,8 @@ func moveOnce(startPoint Point, movement Movement, distance Distance) []Point {
 	for i := 0; i < movement.Steps; i++ {
 		*distance.CurrentDistance++
 		reachedPoint := movement.Operation(startPoint)
-		dist, ok := distance.DistancesByPoint[reachedPoint]
-		if ok {
-			distance.CurrentDistance = &dist
-		} else {
+		_, ok := distance.DistancesByPoint[reachedPoint]
+		if !ok {
 			distance.DistancesByPoint[reachedPoint] = *distance.CurrentDistance
 		}
 		newPoints = append(newPoints, reachedPoint)
@@ -137,7 +135,6 @@ func partTwo() {
 func getShortestCombinedStepsToIntersection(intersections []Point, w1Distances map[Point]int, w2Distances map[Point]int) int {
 	minSteps := math.MaxInt64
 	for i := range intersections {
-		fmt.Println(intersections[i], w1Distances[intersections[i]], w2Distances[intersections[i]])
 		combinedSteps := w1Distances[intersections[i]] + w2Distances[intersections[i]]
 		if combinedSteps < minSteps {
 			minSteps = combinedSteps

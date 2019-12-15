@@ -27,7 +27,7 @@ func multiply(a int, b int) int {
 	return a * b
 }
 
-var operations = map[int]func(int, []int){
+var operations = map[int]func(*int, []int){
 	1: runAdd,
 	2: runMultiply,
 	3: runInput,
@@ -46,44 +46,52 @@ var instructions = []int{}
 func partOne() {
 	fmt.Println("Part 1 start")
 	setupInstructionsFromFile()
-	runInstruction(0)
+	addressPointer := new(int)
+	runInstruction(addressPointer)
 	//fmt.Println(instructions)
 }
 
-func runInstruction(address int) {
-	if address >= len(instructions)-1 || instructions[address] == 99 {
+func runInstruction(address *int) {
+	if *address >= len(instructions)-1 || instructions[*address] == 99 {
 		return
 	}
 
-	ocpm := createOpCodeAndParamModes(instructions[address])
+	ocpm := createOpCodeAndParamModes(instructions[*address])
 	operation := operations[ocpm.OpCode]
-	operation(address+1, ocpm.ParamModes)
-
-	address += len(ocpm.ParamModes) + 1
+	*address++
+	operation(address, ocpm.ParamModes)
 	runInstruction(address)
 }
 
-func runAdd(address int, paramModes []int) {
-	params := getParams(address, paramModes, true)
+func runAdd(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, true)
 	result := add(params[0], params[1])
 	instructions[params[2]] = result
+	*address += len(paramModes)
 }
 
-func runMultiply(address int, paramModes []int) {
-	params := getParams(address, paramModes, true)
+func runMultiply(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, true)
 	result := multiply(params[0], params[1])
 	instructions[params[2]] = result
+	*address += len(paramModes)
 }
 
-func runInput(address int, paramModes []int) {
-	params := getParams(address, paramModes, true)
+func runInput(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, true)
 	input := 1
 	instructions[params[0]] = input
+	*address += len(paramModes)
 }
 
-func runOutput(address int, paramModes []int) {
-	params := getParams(address, paramModes, false)
+func runOutput(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, false)
 	fmt.Println("output", params[0])
+	*address += len(paramModes)
+}
+
+func runJumpIfTrue(address *int, paramModes []int) {
+	return
 }
 
 func getParams(address int, paramModes []int, willWriteToAddress bool) []int {

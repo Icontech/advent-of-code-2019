@@ -12,6 +12,7 @@ import (
 
 func main() {
 	partOne()
+	partTwo()
 }
 
 type OpCodeAndParamModes struct {
@@ -32,6 +33,10 @@ var operations = map[int]func(*int, []int){
 	2: runMultiply,
 	3: runInput,
 	4: runOutput,
+	5: runJumpIfTrue,
+	6: runJumpIfFalse,
+	7: runLessThan,
+	8: runEquals,
 }
 
 var numOfParametersByOpCode = map[string]int{
@@ -39,16 +44,29 @@ var numOfParametersByOpCode = map[string]int{
 	"2": 3,
 	"3": 1,
 	"4": 1,
+	"5": 2,
+	"6": 2,
+	"7": 3,
+	"8": 3,
 }
 
 var instructions = []int{}
+var input int = 0
 
 func partOne() {
 	fmt.Println("Part 1 start")
 	setupInstructionsFromFile()
+	input = 1
 	addressPointer := new(int)
 	runInstruction(addressPointer)
-	//fmt.Println(instructions)
+}
+
+func partTwo() {
+	fmt.Println("Part 2 start")
+	setupInstructionsFromFile()
+	input = 5
+	addressPointer := new(int)
+	runInstruction(addressPointer)
 }
 
 func runInstruction(address *int) {
@@ -79,7 +97,6 @@ func runMultiply(address *int, paramModes []int) {
 
 func runInput(address *int, paramModes []int) {
 	params := getParams(*address, paramModes, true)
-	input := 1
 	instructions[params[0]] = input
 	*address += len(paramModes)
 }
@@ -91,7 +108,41 @@ func runOutput(address *int, paramModes []int) {
 }
 
 func runJumpIfTrue(address *int, paramModes []int) {
-	return
+	params := getParams(*address, paramModes, false)
+	if params[0] != 0 {
+		*address = params[1]
+	} else {
+		*address += len(paramModes)
+	}
+}
+
+func runJumpIfFalse(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, false)
+	if params[0] == 0 {
+		*address = params[1]
+	} else {
+		*address += len(paramModes)
+	}
+}
+
+func runLessThan(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, true)
+	if params[0] < params[1] {
+		instructions[params[2]] = 1
+	} else {
+		instructions[params[2]] = 0
+	}
+	*address += len(paramModes)
+}
+
+func runEquals(address *int, paramModes []int) {
+	params := getParams(*address, paramModes, true)
+	if params[0] == params[1] {
+		instructions[params[2]] = 1
+	} else {
+		instructions[params[2]] = 0
+	}
+	*address += len(paramModes)
 }
 
 func getParams(address int, paramModes []int, willWriteToAddress bool) []int {
@@ -116,6 +167,7 @@ func getParam(i int, paramMode int) int {
 }
 
 func setupInstructionsFromFile() {
+	instructions = nil
 	content, err := ioutil.ReadFile("./input")
 	if err != nil {
 		log.Fatal(err)

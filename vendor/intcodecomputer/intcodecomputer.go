@@ -8,16 +8,19 @@ import (
 
 //IntCodeComputer struct
 type IntCodeComputer struct {
-	instructions      []int
-	address           int
-	inputs            []int
-	currentInputIndex int
-	output            int
+	instructions           []int
+	address                int
+	inputs                 []int
+	currentInputIndex      int
+	output                 int
+	shouldPauseAfterOutput bool
+	isPaused               bool
+	isHalted               bool
 }
 
 //NewIntCodeComputer creates a new IntCodeComputer
-func NewIntCodeComputer(instructions []int) *IntCodeComputer {
-	icc := IntCodeComputer{inputs: []int{0}, instructions: instructions}
+func NewIntCodeComputer(instructions []int, shouldPauseAfterOutput bool) *IntCodeComputer {
+	icc := IntCodeComputer{inputs: []int{0}, instructions: instructions, shouldPauseAfterOutput: shouldPauseAfterOutput}
 	return &icc
 }
 
@@ -86,6 +89,31 @@ func (icc *IntCodeComputer) GetOutput() int {
 	return icc.output
 }
 
+//Pause pauses the currently running program.
+func (icc *IntCodeComputer) Pause() {
+	if !icc.isPaused {
+		icc.isPaused = true
+	}
+}
+
+//Resume resumes the currently paused program.
+func (icc *IntCodeComputer) Resume() {
+	if icc.isPaused {
+		icc.isPaused = false
+		icc.runInstruction()
+	}
+}
+
+//IsPaused returns true if the program has been paused and false otherwise.
+func (icc *IntCodeComputer) IsPaused() bool {
+	return icc.isPaused
+}
+
+//IsHalted returns true if the program has been halted and false otherwise.
+func (icc *IntCodeComputer) IsHalted() bool {
+	return icc.isHalted
+}
+
 func (icc *IntCodeComputer) getInput() int {
 	input := icc.inputs[icc.currentInputIndex]
 	icc.currentInputIndex++
@@ -100,7 +128,12 @@ func (icc *IntCodeComputer) updateOutput(value int) {
 }
 
 func (icc *IntCodeComputer) runInstruction() {
+	if icc.isPaused {
+		return
+	}
+
 	if icc.address >= len(icc.instructions)-1 || icc.instructions[icc.address] == 99 {
+		icc.isHalted = true
 		return
 	}
 
@@ -136,6 +169,9 @@ func (icc *IntCodeComputer) runOutput(paramModes []int) {
 	icc.output = params[0]
 	fmt.Println("output", icc.output)
 	icc.address += len(paramModes)
+	if icc.shouldPauseAfterOutput {
+		icc.isPaused = true
+	}
 }
 
 func (icc *IntCodeComputer) runJumpIfTrue(paramModes []int) {

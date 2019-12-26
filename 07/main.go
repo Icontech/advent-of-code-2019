@@ -11,13 +11,28 @@ import (
 	"strings"
 )
 
+var computers []*intcodecomputer.IntCodeComputer
+var instructions []int
+
 func main() {
 	partOne()
+	//partTwo()
 }
 
 func partOne() {
 	fmt.Println("Part 1 start")
-	setupInstructionsFromFile()
+	instructions = getInstructionsFromFile()
+	fmt.Println(instructions)
+	comp := intcodecomputer.NewIntCodeComputer(instructions)
+	computers = append(computers, comp)
+	permutations := createAllPhaseSettingPermutations()
+	maxOutput, maxPhaseSettings := findLargestThrustersOutputSignal(permutations)
+	fmt.Println("Largest output signal sent to thrusters:", maxOutput, "with phaseSettings:", maxPhaseSettings)
+}
+
+func partTwo() {
+	fmt.Println("Part 2 start")
+	instructions = getInstructionsFromFile()
 	permutations := createAllPhaseSettingPermutations()
 	maxOutput, maxPhaseSettings := findLargestThrustersOutputSignal(permutations)
 	fmt.Println("Largest output signal sent to thrusters:", maxOutput, "with phaseSettings:", maxPhaseSettings)
@@ -60,10 +75,11 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 	maxOutputSignal := 0
 	maxPhaseSettings := []int{}
 	for _, phaseSettings := range *permutations {
-		intcodecomputer.ResetProgram()
+		computers[0].UpdateInstructions(instructions)
+		computers[0].Reset()
 		runAllAmplifiers(phaseSettings)
-		output := intcodecomputer.GetOutput()
-		if intcodecomputer.GetOutput() > maxOutputSignal {
+		output := computers[0].GetOutput()
+		if output > maxOutputSignal {
 			fmt.Println("MAX", output)
 			maxOutputSignal = output
 			maxPhaseSettings = phaseSettings
@@ -75,17 +91,17 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 
 func runAllAmplifiers(phaseSettings []int) {
 	for _, phase := range phaseSettings {
-		intcodecomputer.ResetInstructions()
-		intcodecomputer.UpdateInputs([]int{phase, intcodecomputer.GetOutput()})
+		computers[0].UpdateInstructions(instructions)
+		computers[0].UpdateInputs([]int{phase, computers[0].GetOutput()})
 		runSingleAmplifier()
 	}
 }
 
 func runSingleAmplifier() {
-	intcodecomputer.Run()
+	computers[0].Run()
 }
 
-func setupInstructionsFromFile() {
+func getInstructionsFromFile() []int {
 	content, err := ioutil.ReadFile("./input")
 	if err != nil {
 		log.Fatal(err)
@@ -94,14 +110,14 @@ func setupInstructionsFromFile() {
 	text := string(content)
 	inputAsStrings := strings.Split(text, ",")
 
-	var instructions []int
+	var instr []int
 	for i := range inputAsStrings {
 		input, e := strconv.ParseInt(inputAsStrings[i], 0, 0)
 		if e != nil {
 			log.Fatal(e)
 		}
-		instructions = append(instructions, int(input))
+		instr = append(instr, int(input))
 	}
 
-	intcodecomputer.Init(instructions)
+	return instr
 }

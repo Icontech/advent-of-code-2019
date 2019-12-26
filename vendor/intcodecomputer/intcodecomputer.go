@@ -6,6 +6,21 @@ import (
 	"strconv"
 )
 
+//IntCodeComputer struct
+type IntCodeComputer struct {
+	instructions      []int
+	address           int
+	inputs            []int
+	currentInputIndex int
+	output            int
+}
+
+//NewIntCodeComputer creates a new IntCodeComputer
+func NewIntCodeComputer(instructions []int) *IntCodeComputer {
+	icc := IntCodeComputer{inputs: []int{0}, instructions: instructions}
+	return &icc
+}
+
 type opCodeAndParamModes struct {
 	opCode     int
 	paramModes []int
@@ -19,15 +34,15 @@ func multiply(a int, b int) int {
 	return a * b
 }
 
-var operations = map[int]func(*int, []int){
-	1: runAdd,
-	2: runMultiply,
-	3: runInput,
-	4: runOutput,
-	5: runJumpIfTrue,
-	6: runJumpIfFalse,
-	7: runLessThan,
-	8: runEquals,
+var operations = map[int]func(*IntCodeComputer, []int){
+	1: (*IntCodeComputer).runAdd,
+	2: (*IntCodeComputer).runMultiply,
+	3: (*IntCodeComputer).runInput,
+	4: (*IntCodeComputer).runOutput,
+	5: (*IntCodeComputer).runJumpIfTrue,
+	6: (*IntCodeComputer).runJumpIfFalse,
+	7: (*IntCodeComputer).runLessThan,
+	8: (*IntCodeComputer).runEquals,
 }
 
 var numOfParametersByOpCode = map[string]int{
@@ -41,160 +56,141 @@ var numOfParametersByOpCode = map[string]int{
 	"8": 3,
 }
 
-var instructions = []int{}
-var originalInstructions = []int{}
-var inputs = []int{0}
-var currentInputIndex = 0
-var output int = 0
-
-//Init initializes the intcode computer with a program (an array of ints). Must be called before Run func.
-func Init(program []int) {
-	instructions = nil
-	originalInstructions = nil
-	for i := range program {
-		instructions = append(instructions, program[i])
-		originalInstructions = append(originalInstructions, program[i])
-	}
-}
-
 //Run runs the program initialized with the Init func.
-func Run() {
-	address := new(int)
-	runInstruction(address)
+func (icc *IntCodeComputer) Run() {
+	icc.runInstruction()
 }
 
-//ResetInstructions resets the instructions to their initial state but does not change the inputs/output values.
-func ResetInstructions() {
-	for i := range originalInstructions {
-		instructions[i] = originalInstructions[i]
-	}
+//UpdateInstructions updates the instructions used by the program and sets the address to 0.
+func (icc *IntCodeComputer) UpdateInstructions(instr []int) {
+	icc.instructions = instr
+	icc.address = 0
 }
 
-//ResetProgram resets the instructions, inputs and output to their initial state.
-func ResetProgram() {
-	ResetInstructions()
-	output = 0
-	inputs = []int{0}
+//Reset resets all variables to their initial state.
+func (icc *IntCodeComputer) Reset() {
+	icc.output = 0
+	icc.instructions = []int{0}
+	icc.address = 0
+	icc.instructions = nil
 }
 
 //UpdateInputs adds new values to be used for the input operation. For each input operation, the index of the array will be incremented by 1.
-func UpdateInputs(ints []int) {
-	inputs = nil
-	for i := range ints {
-		inputs = append(inputs, ints[i])
-	}
-	currentInputIndex = 0
+func (icc *IntCodeComputer) UpdateInputs(inputs []int) {
+	icc.inputs = inputs
+	icc.currentInputIndex = 0
 }
 
 // GetOutput returns the current value of the output variable
-func GetOutput() int {
-	return output
+func (icc *IntCodeComputer) GetOutput() int {
+	return icc.output
 }
 
-func getInput() int {
-	input := inputs[currentInputIndex]
-	currentInputIndex++
-	if currentInputIndex == len(inputs) {
-		currentInputIndex = 0
+func (icc *IntCodeComputer) getInput() int {
+	input := icc.inputs[icc.currentInputIndex]
+	icc.currentInputIndex++
+	if icc.currentInputIndex == len(icc.inputs) {
+		icc.currentInputIndex = 0
 	}
 	return input
 }
 
-func updateOutput(value int) {
-	output = value
+func (icc *IntCodeComputer) updateOutput(value int) {
+	icc.output = value
 }
 
-func runInstruction(address *int) {
-	if *address >= len(instructions)-1 || instructions[*address] == 99 {
+func (icc *IntCodeComputer) runInstruction() {
+	if icc.address >= len(icc.instructions)-1 || icc.instructions[icc.address] == 99 {
 		return
 	}
 
-	ocpm := createopCodeAndParamModes(instructions[*address])
+	ocpm := createOpCodeAndParamModes(icc.instructions[icc.address])
 	operation := operations[ocpm.opCode]
-	*address++
-	operation(address, ocpm.paramModes)
-	runInstruction(address)
+	icc.address++
+	operation(icc, ocpm.paramModes)
+	icc.runInstruction()
 }
 
-func runAdd(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, true)
+func (icc *IntCodeComputer) runAdd(paramModes []int) {
+	params := icc.getParams(paramModes, true)
 	result := add(params[0], params[1])
-	instructions[params[2]] = result
-	*address += len(paramModes)
+	icc.instructions[params[2]] = result
+	icc.address += len(paramModes)
 }
 
-func runMultiply(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, true)
+func (icc *IntCodeComputer) runMultiply(paramModes []int) {
+	params := icc.getParams(paramModes, true)
 	result := multiply(params[0], params[1])
-	instructions[params[2]] = result
-	*address += len(paramModes)
+	icc.instructions[params[2]] = result
+	icc.address += len(paramModes)
 }
 
-func runInput(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, true)
-	instructions[params[0]] = getInput()
-	*address += len(paramModes)
+func (icc *IntCodeComputer) runInput(paramModes []int) {
+	params := icc.getParams(paramModes, true)
+	icc.instructions[params[0]] = icc.getInput()
+	icc.address += len(paramModes)
 }
 
-func runOutput(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, false)
-	output = params[0]
-	fmt.Println("output", output)
-	*address += len(paramModes)
+func (icc *IntCodeComputer) runOutput(paramModes []int) {
+	params := icc.getParams(paramModes, false)
+	icc.output = params[0]
+	fmt.Println("output", icc.output)
+	icc.address += len(paramModes)
 }
 
-func runJumpIfTrue(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, false)
+func (icc *IntCodeComputer) runJumpIfTrue(paramModes []int) {
+	params := icc.getParams(paramModes, false)
 	if params[0] != 0 {
-		*address = params[1]
+		icc.address = params[1]
 	} else {
-		*address += len(paramModes)
+		icc.address += len(paramModes)
 	}
 }
 
-func runJumpIfFalse(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, false)
+func (icc *IntCodeComputer) runJumpIfFalse(paramModes []int) {
+	params := icc.getParams(paramModes, false)
 	if params[0] == 0 {
-		*address = params[1]
+		icc.address = params[1]
 	} else {
-		*address += len(paramModes)
+		icc.address += len(paramModes)
 	}
 }
 
-func runLessThan(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, true)
+func (icc *IntCodeComputer) runLessThan(paramModes []int) {
+	params := icc.getParams(paramModes, true)
 	if params[0] < params[1] {
-		instructions[params[2]] = 1
+		icc.instructions[params[2]] = 1
 	} else {
-		instructions[params[2]] = 0
+		icc.instructions[params[2]] = 0
 	}
-	*address += len(paramModes)
+	icc.address += len(paramModes)
 }
 
-func runEquals(address *int, paramModes []int) {
-	params := getParams(*address, paramModes, true)
+func (icc *IntCodeComputer) runEquals(paramModes []int) {
+	params := icc.getParams(paramModes, true)
 	if params[0] == params[1] {
-		instructions[params[2]] = 1
+		icc.instructions[params[2]] = 1
 	} else {
-		instructions[params[2]] = 0
+		icc.instructions[params[2]] = 0
 	}
-	*address += len(paramModes)
+	icc.address += len(paramModes)
 }
 
-func getParams(address int, paramModes []int, willWriteToAddress bool) []int {
+func (icc *IntCodeComputer) getParams(paramModes []int, willWriteToAddress bool) []int {
+	address := icc.address
 	params := make([]int, len(paramModes))
 	for i := 0; i < len(paramModes); i++ {
 		if willWriteToAddress && i == len(paramModes)-1 {
-			params[i] = instructions[address]
+			params[i] = icc.instructions[address]
 		} else {
-			params[i] = getParam(address, paramModes[i])
+			params[i] = getParam(address, icc.instructions, paramModes[i])
 		}
 		address++
 	}
 	return params
 }
 
-func getParam(i int, paramMode int) int {
+func getParam(i int, instructions []int, paramMode int) int {
 	if paramMode == 1 {
 		return instructions[i]
 	}
@@ -202,7 +198,7 @@ func getParam(i int, paramMode int) int {
 	return instructions[address]
 }
 
-func createopCodeAndParamModes(instruction int) opCodeAndParamModes {
+func createOpCodeAndParamModes(instruction int) opCodeAndParamModes {
 	inst := strconv.Itoa(instruction)
 	length := len(inst)
 	opCode := inst[length-1 : length]

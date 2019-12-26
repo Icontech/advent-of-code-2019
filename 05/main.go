@@ -19,17 +19,17 @@ func main() {
 func partOne() {
 	fmt.Println("Part 1 start")
 	instructions := getInstructionsFromFile()
-	intcodecomputer.Init(instructions)
-	intcodecomputer.UpdateInputs([]int{1})
-	intcodecomputer.Run()
+	computer := intcodecomputer.NewIntCodeComputer(instructions, false)
+	computer.UpdateInputs([]int{1})
+	computer.Run()
 }
 
 func partTwo() {
 	fmt.Println("Part 2 start")
 	instructions := getInstructionsFromFile()
-	intcodecomputer.Init(instructions)
-	intcodecomputer.UpdateInputs([]int{5})
-	intcodecomputer.Run()
+	computer := intcodecomputer.NewIntCodeComputer(instructions, false)
+	computer.UpdateInputs([]int{5})
+	computer.Run()
 }
 
 func getInstructionsFromFile() []int {

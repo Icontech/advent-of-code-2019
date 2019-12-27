@@ -81,6 +81,8 @@ func (icc *IntCodeComputer) Reset() {
 	icc.instructions = []int{0}
 	icc.address = 0
 	icc.instructions = nil
+	icc.isHalted = false
+	icc.isPaused = false
 }
 
 //UpdateInputs adds new values to be used for the input operation. For each input operation, the index of the array will be incremented by 1.
@@ -139,8 +141,9 @@ func (icc *IntCodeComputer) runInstruction() {
 		return
 	}
 
-	if icc.address >= len(icc.instructions)-1 || icc.instructions[icc.address] == 99 {
+	if icc.instructions[icc.address] == 99 {
 		icc.isHalted = true
+		fmt.Println(icc.name, "halted")
 		return
 	}
 

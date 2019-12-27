@@ -8,6 +8,7 @@ import (
 
 //IntCodeComputer struct
 type IntCodeComputer struct {
+	name                   string
 	instructions           []int
 	address                int
 	inputs                 []int
@@ -19,8 +20,12 @@ type IntCodeComputer struct {
 }
 
 //NewIntCodeComputer creates a new IntCodeComputer
-func NewIntCodeComputer(instructions []int, shouldPauseAfterOutput bool) *IntCodeComputer {
-	icc := IntCodeComputer{inputs: []int{0}, instructions: instructions, shouldPauseAfterOutput: shouldPauseAfterOutput}
+func NewIntCodeComputer(instructions []int, shouldPauseAfterOutput bool, name string) *IntCodeComputer {
+	icc := IntCodeComputer{
+		inputs:                 []int{0},
+		instructions:           instructions,
+		shouldPauseAfterOutput: shouldPauseAfterOutput,
+		name:                   name}
 	return &icc
 }
 
@@ -92,6 +97,7 @@ func (icc *IntCodeComputer) GetOutput() int {
 //Pause pauses the currently running program.
 func (icc *IntCodeComputer) Pause() {
 	if !icc.isPaused {
+		fmt.Println(icc.name, "paused")
 		icc.isPaused = true
 	}
 }
@@ -100,6 +106,7 @@ func (icc *IntCodeComputer) Pause() {
 func (icc *IntCodeComputer) Resume() {
 	if icc.isPaused {
 		icc.isPaused = false
+		fmt.Println(icc.name, "resumed")
 		icc.runInstruction()
 	}
 }
@@ -160,17 +167,19 @@ func (icc *IntCodeComputer) runMultiply(paramModes []int) {
 
 func (icc *IntCodeComputer) runInput(paramModes []int) {
 	params := icc.getParams(paramModes, true)
-	icc.instructions[params[0]] = icc.getInput()
+	input := icc.getInput()
+	fmt.Println(icc.name, "input", input)
+	icc.instructions[params[0]] = input
 	icc.address += len(paramModes)
 }
 
 func (icc *IntCodeComputer) runOutput(paramModes []int) {
 	params := icc.getParams(paramModes, false)
 	icc.output = params[0]
-	fmt.Println("output", icc.output)
+	fmt.Println(icc.name, "output:", icc.output)
 	icc.address += len(paramModes)
 	if icc.shouldPauseAfterOutput {
-		icc.isPaused = true
+		icc.Pause()
 	}
 }
 

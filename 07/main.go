@@ -84,7 +84,7 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 	for _, phaseSettings := range *permutations {
 		resetAllAmplifiers()
 		runAllAmplifiersOnce(phaseSettings)
-		output := amplifiers[0].GetOutput()
+		output := amplifiers[len(amplifiers)-1].GetOutput()
 		if output > maxOutputSignal {
 			fmt.Println("MAX", output)
 			maxOutputSignal = output
@@ -96,11 +96,24 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 }
 
 func runAllAmplifiersOnce(phaseSettings []int) {
-	for _, phase := range phaseSettings {
-		amplifiers[0].UpdateInstructions(instructions)
-		amplifiers[0].UpdateInputs([]int{phase, amplifiers[0].GetOutput()})
-		amplifiers[0].Run()
+	for i, phase := range phaseSettings {
+		prevAmpIndex := mod(i-1, len(phaseSettings))
+		amplifiers[i].UpdateInputs([]int{phase, amplifiers[prevAmpIndex].GetOutput()})
+		amplifiers[i].Run()
 	}
+}
+
+func runAllAmplifiersWithFeedbackLoop(phaseSettings []int) {
+	for i, phase := range phaseSettings {
+		prevAmpIndex := mod(i-1, len(phaseSettings))
+		amplifiers[i].UpdateInputs([]int{phase, amplifiers[prevAmpIndex].GetOutput()})
+		amplifiers[i].Run()
+	}
+
+	for i := range amplifiers {
+		fmt.Println(amplifiers[i].IsPaused())
+	}
+
 }
 
 func resetAllAmplifiers() {
@@ -129,4 +142,8 @@ func getInstructionsFromFile() []int {
 	}
 
 	return instr
+}
+
+func mod(a, b int) int {
+	return (a%b + b) % b
 }

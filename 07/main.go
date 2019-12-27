@@ -22,23 +22,31 @@ func main() {
 func partOne() {
 	fmt.Println("Part 1 start")
 	instructions = getInstructionsFromFile()
-	comp := intcodecomputer.NewIntCodeComputer(instructions, false, "amp0")
-	amplifiers = append(amplifiers, comp)
-	permutations := createAllPhaseSettingPermutations()
+	phaseSettings := []int{4, 3, 2, 1, 0}
+	setupAmplifiers(false, len(phaseSettings))
+	permutations := createAllPhaseSettingPermutations(phaseSettings)
 	maxOutput, maxPhaseSettings := findLargestThrustersOutputSignal(permutations)
 	fmt.Println("Largest output signal sent to thrusters:", maxOutput, "with phaseSettings:", maxPhaseSettings)
+}
+
+func setupAmplifiers(shouldPauseOnOutput bool, numOfAmplifiers int) {
+	for i := 0; i < numOfAmplifiers; i++ {
+		icc := intcodecomputer.NewIntCodeComputer(instructions, shouldPauseOnOutput, "amp"+strconv.Itoa(i))
+		amplifiers = append(amplifiers, icc)
+	}
 }
 
 func partTwo() {
 	fmt.Println("Part 2 start")
 	instructions = getInstructionsFromFile()
-	permutations := createAllPhaseSettingPermutations()
+	phaseSettings := []int{4, 3, 2, 1, 0}
+	setupAmplifiers(false, len(phaseSettings))
+	permutations := createAllPhaseSettingPermutations(phaseSettings)
 	maxOutput, maxPhaseSettings := findLargestThrustersOutputSignal(permutations)
 	fmt.Println("Largest output signal sent to thrusters:", maxOutput, "with phaseSettings:", maxPhaseSettings)
 }
 
-func createAllPhaseSettingPermutations() *[][]int {
-	phaseSettings := []int{4, 3, 2, 1, 0}
+func createAllPhaseSettingPermutations(phaseSettings []int) *[][]int {
 	permutations := [][]int{}
 	permute(phaseSettings, 0, &permutations)
 	return &permutations
@@ -74,8 +82,7 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 	maxOutputSignal := 0
 	maxPhaseSettings := []int{}
 	for _, phaseSettings := range *permutations {
-		amplifiers[0].UpdateInstructions(instructions)
-		amplifiers[0].Reset()
+		resetAllAmplifiers()
 		runAllAmplifiersOnce(phaseSettings)
 		output := amplifiers[0].GetOutput()
 		if output > maxOutputSignal {
@@ -92,12 +99,15 @@ func runAllAmplifiersOnce(phaseSettings []int) {
 	for _, phase := range phaseSettings {
 		amplifiers[0].UpdateInstructions(instructions)
 		amplifiers[0].UpdateInputs([]int{phase, amplifiers[0].GetOutput()})
-		runSingleAmplifier()
+		amplifiers[0].Run()
 	}
 }
 
-func runSingleAmplifier() {
-	amplifiers[0].Run()
+func resetAllAmplifiers() {
+	for i := range amplifiers {
+		amplifiers[i].Reset()
+		amplifiers[i].UpdateInstructions(instructions)
+	}
 }
 
 func getInstructionsFromFile() []int {

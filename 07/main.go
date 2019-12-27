@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-var computers []*intcodecomputer.IntCodeComputer
+var amplifiers []*intcodecomputer.IntCodeComputer
 var instructions []int
 
 func main() {
@@ -22,9 +22,8 @@ func main() {
 func partOne() {
 	fmt.Println("Part 1 start")
 	instructions = getInstructionsFromFile()
-	fmt.Println(instructions)
-	comp := intcodecomputer.NewIntCodeComputer(instructions)
-	computers = append(computers, comp)
+	comp := intcodecomputer.NewIntCodeComputer(instructions, false, "amp0")
+	amplifiers = append(amplifiers, comp)
 	permutations := createAllPhaseSettingPermutations()
 	maxOutput, maxPhaseSettings := findLargestThrustersOutputSignal(permutations)
 	fmt.Println("Largest output signal sent to thrusters:", maxOutput, "with phaseSettings:", maxPhaseSettings)
@@ -75,10 +74,10 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 	maxOutputSignal := 0
 	maxPhaseSettings := []int{}
 	for _, phaseSettings := range *permutations {
-		computers[0].UpdateInstructions(instructions)
-		computers[0].Reset()
-		runAllAmplifiers(phaseSettings)
-		output := computers[0].GetOutput()
+		amplifiers[0].UpdateInstructions(instructions)
+		amplifiers[0].Reset()
+		runAllAmplifiersOnce(phaseSettings)
+		output := amplifiers[0].GetOutput()
 		if output > maxOutputSignal {
 			fmt.Println("MAX", output)
 			maxOutputSignal = output
@@ -89,16 +88,16 @@ func findLargestThrustersOutputSignal(permutations *[][]int) (int, []int) {
 	return maxOutputSignal, maxPhaseSettings
 }
 
-func runAllAmplifiers(phaseSettings []int) {
+func runAllAmplifiersOnce(phaseSettings []int) {
 	for _, phase := range phaseSettings {
-		computers[0].UpdateInstructions(instructions)
-		computers[0].UpdateInputs([]int{phase, computers[0].GetOutput()})
+		amplifiers[0].UpdateInstructions(instructions)
+		amplifiers[0].UpdateInputs([]int{phase, amplifiers[0].GetOutput()})
 		runSingleAmplifier()
 	}
 }
 
 func runSingleAmplifier() {
-	computers[0].Run()
+	amplifiers[0].Run()
 }
 
 func getInstructionsFromFile() []int {

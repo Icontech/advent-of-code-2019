@@ -1,4 +1,4 @@
-//Problem description: https://adventofcode.com/2019/day/7
+//Problem description: https://adventofcode.com/2019/day/8
 
 package main
 
@@ -19,6 +19,7 @@ var digits []int
 
 func main() {
 	partOne()
+	partTwo()
 }
 
 func partOne() {
@@ -81,6 +82,46 @@ func calculateOnesMultipliedByTwos(layerNumber int) int {
 	}
 
 	return onesCount * twosCount
+}
+
+func partTwo() {
+	fmt.Println("Part 2 start")
+	setupDigitsFromFile()
+	decodedImage := getDecodedImage()
+	fmt.Println("Decoding image...")
+	printImage(decodedImage)
+	fmt.Println("Message produced after decoding image: ACKPZ")
+}
+
+func getDecodedImage() []int {
+	decodedImage := []int{}
+	for i := 0; i < layerSize; i++ {
+		pixelColor := getPixelColor(i)
+		decodedImage = append(decodedImage, pixelColor)
+	}
+	return decodedImage
+}
+
+func getPixelColor(pixel int) int {
+	layerCount := len(digits) / layerSize
+	for i := 0; i < layerCount; i++ {
+		color := digits[pixel+(i*layerSize)]
+		if color != 2 {
+			return color
+		}
+	}
+	return 2
+}
+
+func printImage(image []int) {
+	for i := 0; i < len(image); i++ {
+		mod := mod(i, imageWidth)
+		if mod == imageWidth-1 {
+			fmt.Println(image[i])
+		} else {
+			fmt.Print(image[i])
+		}
+	}
 }
 
 func setupDigitsFromFile() {

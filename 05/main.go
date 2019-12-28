@@ -20,7 +20,7 @@ func partOne() {
 	fmt.Println("Part 1 start")
 	instructions := getInstructionsFromFile()
 	computer := intcodecomputer.NewIntCodeComputer(instructions, false, "computer")
-	computer.UpdateInputs([]int{1})
+	computer.UpdateInputs([]int64{1})
 	computer.Run()
 }
 
@@ -28,12 +28,12 @@ func partTwo() {
 	fmt.Println("Part 2 start")
 	instructions := getInstructionsFromFile()
 	computer := intcodecomputer.NewIntCodeComputer(instructions, false, "computer")
-	computer.UpdateInputs([]int{5})
+	computer.UpdateInputs([]int64{5})
 	computer.Run()
 }
 
-func getInstructionsFromFile() []int {
-	var instructions []int
+func getInstructionsFromFile() []int64 {
+	var instructions []int64
 	content, err := ioutil.ReadFile("./input")
 	if err != nil {
 		log.Fatal(err)
@@ -47,7 +47,7 @@ func getInstructionsFromFile() []int {
 		if e != nil {
 			log.Fatal(e)
 		}
-		instructions = append(instructions, int(input))
+		instructions = append(instructions, input)
 	}
 
 	return instructions

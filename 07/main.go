@@ -12,11 +12,11 @@ import (
 )
 
 var amplifiers []*intcodecomputer.IntCodeComputer
-var instructions []int
+var instructions []int64
 
 func main() {
 	partOne()
-	//partTwo()
+	partTwo()
 }
 
 func partOne() {
@@ -79,8 +79,8 @@ func addPermutation(permutations *[][]int, phases []int) {
 	*permutations = append(*permutations, phaseCopy)
 }
 
-func findLargestThrustersOutputSignal(permutations *[][]int, useFeedbackLoop bool) (int, []int) {
-	maxOutputSignal := 0
+func findLargestThrustersOutputSignal(permutations *[][]int, useFeedbackLoop bool) (int64, []int) {
+	maxOutputSignal := int64(0)
 	maxPhaseSettings := []int{}
 	amplifierRunFunc := runAllAmplifiersOnce
 	if useFeedbackLoop {
@@ -103,7 +103,7 @@ func findLargestThrustersOutputSignal(permutations *[][]int, useFeedbackLoop boo
 func runAllAmplifiersOnce(phaseSettings []int) {
 	for i, phase := range phaseSettings {
 		prevAmpIndex := mod(i-1, len(phaseSettings))
-		amplifiers[i].UpdateInputs([]int{phase, amplifiers[prevAmpIndex].GetOutput()})
+		amplifiers[i].UpdateInputs([]int64{int64(phase), amplifiers[prevAmpIndex].GetOutput()})
 		amplifiers[i].Run()
 	}
 }
@@ -111,7 +111,7 @@ func runAllAmplifiersOnce(phaseSettings []int) {
 func runAllAmplifiersWithFeedbackLoop(phaseSettings []int) {
 	for i, phase := range phaseSettings {
 		prevAmpIndex := mod(i-1, len(phaseSettings))
-		amplifiers[i].UpdateInputs([]int{phase, amplifiers[prevAmpIndex].GetOutput()})
+		amplifiers[i].UpdateInputs([]int64{int64(phase), amplifiers[prevAmpIndex].GetOutput()})
 		amplifiers[i].Run()
 	}
 
@@ -122,7 +122,7 @@ func runAllAmplifiersWithFeedbackLoop(phaseSettings []int) {
 			}
 
 			prevAmpIndex := mod(i-1, len(amplifiers))
-			amplifiers[i].UpdateInputs([]int{amplifiers[prevAmpIndex].GetOutput()})
+			amplifiers[i].UpdateInputs([]int64{amplifiers[prevAmpIndex].GetOutput()})
 			amplifiers[i].Resume()
 		}
 	}
@@ -144,7 +144,7 @@ func resetAllAmplifiers() {
 	}
 }
 
-func getInstructionsFromFile() []int {
+func getInstructionsFromFile() []int64 {
 	content, err := ioutil.ReadFile("./input")
 	if err != nil {
 		log.Fatal(err)
@@ -153,13 +153,13 @@ func getInstructionsFromFile() []int {
 	text := string(content)
 	inputAsStrings := strings.Split(text, ",")
 
-	var instr []int
+	var instr []int64
 	for i := range inputAsStrings {
 		input, e := strconv.ParseInt(inputAsStrings[i], 0, 0)
 		if e != nil {
 			log.Fatal(e)
 		}
-		instr = append(instr, int(input))
+		instr = append(instr, input)
 	}
 
 	return instr

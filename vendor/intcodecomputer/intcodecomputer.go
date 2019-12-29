@@ -71,7 +71,10 @@ func (icc *IntCodeComputer) Run() {
 
 //UpdateInstructions updates the instructions used by the program and sets the address to 0.
 func (icc *IntCodeComputer) UpdateInstructions(instr []int64) {
-	icc.instructions = instr
+	icc.instructions = nil
+	for i := 0; i < len(instr); i++ {
+		icc.instructions = append(icc.instructions, instr[i])
+	}
 	icc.address = 0
 }
 
@@ -121,6 +124,19 @@ func (icc *IntCodeComputer) IsPaused() bool {
 //IsHalted returns true if the program has been halted and false otherwise.
 func (icc *IntCodeComputer) IsHalted() bool {
 	return icc.isHalted
+}
+
+//GetInstruction returns the instruction in the provided address and a true value, if the address is within range. Otherwise returns false and 0.
+func (icc *IntCodeComputer) GetInstruction(address int) (bool, int64) {
+	if icc.instructions == nil {
+		return false, 0
+	}
+
+	if 0 <= address && address < len(icc.instructions) {
+		return true, icc.instructions[address]
+	}
+
+	return false, 0
 }
 
 func (icc *IntCodeComputer) getInput() int64 {

@@ -16,13 +16,30 @@ var instructions []int64
 
 func main() {
 	partOne()
+	partTwo()
 }
 
 func partOne() {
 	fmt.Println("Part 1 start")
 	setupInstructionsFromFile()
+	runBoostProgramTest()
+}
+
+func partTwo() {
+	fmt.Println("Part 2 start")
+	setupInstructionsFromFile()
+	runBoostProgramInSensorBoostMode()
+}
+
+func runBoostProgramTest() {
 	icc := intcodecomputer.NewIntCodeComputer(instructions, false, "computer")
 	icc.UpdateInputs([]int64{1})
+	icc.Run()
+}
+
+func runBoostProgramInSensorBoostMode() {
+	icc := intcodecomputer.NewIntCodeComputer(instructions, false, "computer")
+	icc.UpdateInputs([]int64{2})
 	icc.Run()
 }
 

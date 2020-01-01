@@ -17,6 +17,7 @@ type IntCodeComputer struct {
 	shouldPauseAfterOutput bool
 	isPaused               bool
 	isHalted               bool
+	relativeBase           int64
 }
 
 //NewIntCodeComputer creates a new IntCodeComputer
@@ -51,6 +52,7 @@ var operations = map[int]func(*IntCodeComputer, []int){
 	6: (*IntCodeComputer).runJumpIfFalse,
 	7: (*IntCodeComputer).runLessThan,
 	8: (*IntCodeComputer).runEquals,
+	9: (*IntCodeComputer).runAdjustRelativeBase,
 }
 
 var numOfParametersByOpCode = map[string]int{
@@ -62,6 +64,7 @@ var numOfParametersByOpCode = map[string]int{
 	"6": 2,
 	"7": 3,
 	"8": 3,
+	"9": 1,
 }
 
 //Run runs the program initialized with the Init func.
@@ -86,6 +89,7 @@ func (icc *IntCodeComputer) Reset() {
 	icc.instructions = nil
 	icc.isHalted = false
 	icc.isPaused = false
+	icc.relativeBase = 0
 }
 
 //UpdateInputs adds new values to be used for the input operation. For each input operation, the index of the array will be incremented by 1.
@@ -240,26 +244,67 @@ func (icc *IntCodeComputer) runEquals(paramModes []int) {
 	icc.address += len(paramModes)
 }
 
+func (icc *IntCodeComputer) runAdjustRelativeBase(paramModes []int) {
+	params := icc.getParams(paramModes, false)
+	icc.relativeBase += params[0]
+	icc.address += len(paramModes)
+}
+
 func (icc *IntCodeComputer) getParams(paramModes []int, willWriteToAddress bool) []int64 {
 	address := icc.address
 	params := make([]int64, len(paramModes))
 	for i := 0; i < len(paramModes); i++ {
 		if willWriteToAddress && i == len(paramModes)-1 {
-			params[i] = icc.instructions[address]
+			params[i] = icc.getAddressParam(address, paramModes[i])
 		} else {
-			params[i] = getParam(address, icc.instructions, paramModes[i])
+			params[i] = icc.getValueParam(address, paramModes[i])
 		}
 		address++
 	}
 	return params
 }
 
-func getParam(i int, instructions []int64, paramMode int) int64 {
-	if paramMode == 1 {
-		return instructions[i]
+func (icc *IntCodeComputer) getValueParam(i int, paramMode int) int64 {
+	if paramMode == 0 {
+		address := icc.instructions[i]
+		icc.expandInstructionsToIncludeAddress(address)
+		return icc.instructions[address]
+	} else if paramMode == 1 {
+		return icc.instructions[i]
+	} else {
+		address := icc.relativeBase + icc.instructions[i]
+		icc.expandInstructionsToIncludeAddress(address)
+		return icc.instructions[address]
 	}
-	address := instructions[i]
-	return instructions[address]
+}
+
+func (icc *IntCodeComputer) getAddressParam(i int, paramMode int) int64 {
+	if paramMode == 0 {
+		address := icc.instructions[i]
+		icc.expandInstructionsToIncludeAddress(address)
+		return address
+	} else if paramMode == 2 {
+		address := icc.relativeBase + icc.instructions[i]
+		icc.expandInstructionsToIncludeAddress(address)
+		return address
+	}
+
+	log.Fatal("Invalid paramMode:", paramMode)
+	return 0
+}
+
+func (icc *IntCodeComputer) expandInstructionsToIncludeAddress(address int64) {
+	diff := icc.getDiffWithInstructionsLength(address)
+	if diff >= 0 {
+		for i := int64(0); i <= diff; i++ {
+			icc.instructions = append(icc.instructions, 0)
+		}
+	}
+}
+
+func (icc *IntCodeComputer) getDiffWithInstructionsLength(address int64) int64 {
+	diff := address - int64(len(icc.instructions))
+	return diff
 }
 
 func createOpCodeAndParamModes(instruction int64) opCodeAndParamModes {
